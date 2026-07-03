@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Conversation, Message, Contact, ConversationStatus } from "@/types";
 import { useRealtime } from "@/hooks/use-realtime";
+import {
+  reconcileMessages,
+  isOptimistic,
+} from "@/lib/inbox/reconcile-messages";
 import { ConversationList } from "@/components/inbox/conversation-list";
 import { MessageThread } from "@/components/inbox/message-thread";
 import { ContactSidebar } from "@/components/inbox/contact-sidebar";
@@ -209,11 +213,14 @@ export default function InboxPage() {
           setMessages((prev) => {
             // Avoid duplicates
             if (prev.some((m) => m.id === newMsg.id)) return prev;
-            // Replace optimistic message if it exists
-            const withoutOptimistic = prev.filter(
-              (m) => !m.id.startsWith("temp-")
-            );
-            return [...withoutOptimistic, newMsg];
+            // Reconcile: append the authoritative row and drop ONLY the
+            // optimistic row it corresponds to (matched by content). Any
+            // other in-flight or failed optimistic rows are preserved —
+            // the old code blanket-stripped every temp- here, which wiped
+            // unrelated sends and failed messages.
+            const realRows = prev.filter((m) => !isOptimistic(m));
+            const optimistic = prev.filter(isOptimistic);
+            return reconcileMessages([...realRows, newMsg], optimistic);
           });
         }
 
@@ -486,7 +493,15 @@ export default function InboxPage() {
 
 
   const handleMessagesLoaded = useCallback((loaded: Message[]) => {
-    setMessages(loaded);
+    // A refetch (conversation switch, resync on reconnect / tab-focus,
+    // manual refresh) returns only DB rows. Merge them with any surviving
+    // optimistic rows instead of replacing wholesale — otherwise a failed
+    // send (no DB counterpart) or an in-flight one vanishes on refresh.
+    // reconcileMessages drops an optimistic row only when its real row is
+    // present in `loaded`.
+    setMessages((prev) =>
+      reconcileMessages(loaded, prev.filter(isOptimistic)),
+    );
   }, []);
 
   const handleNewMessage = useCallback((msg: Message) => {
