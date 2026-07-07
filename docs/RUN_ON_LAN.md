@@ -10,10 +10,11 @@ Hand this file to whoever sets up the machine.
   Auth + Realtime + Storage) as the backend. Wraps the WhatsApp Business
   Cloud API.
 - **Repo (fork):** `https://github.com/pravindev12/wacrm`
-- **Branch to deploy:** `fix/messages-disappear-on-refresh`
-  (contains the inbox bug fix we're testing). `main` is the clean base;
-  `feat/whatsapp-calling` is a separate in-progress feature — **do not**
-  deploy that one for this test.
+- **Branch to deploy:** `develop` — our integration/deploy branch (it
+  currently includes the inbox bug fix). `main` is the clean upstream
+  mirror (don't deploy it); `feat/whatsapp-calling` is a separate
+  in-progress feature — **do not** deploy that one. See
+  [`BRANCHING.md`](./BRANCHING.md) for the full model.
 - **Package manager:** npm (a `package-lock.json` is committed — use
   `npm ci`, not yarn/pnpm).
 
@@ -64,7 +65,7 @@ without hitting Meta). See `.env.local.example` for the full annotated list.
 ```bash
 git clone https://github.com/pravindev12/wacrm.git
 cd wacrm
-git checkout fix/messages-disappear-on-refresh
+git checkout develop
 npm ci
 cp .env.local.example .env.local     # then fill in the values from §3
 # bind to all interfaces so other machines on the LAN can reach it:
