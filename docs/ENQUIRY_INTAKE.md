@@ -12,14 +12,15 @@ template (`enquiry_intake`, "New enquiry (Sales or Jobs)") in
 ```
 (new contact sends their first message)
 Bot: Welcome to JUSTTRY TECHNOLOGIES! 👋 …one quick question first.
-Bot: What are you reaching out about?   [ Sales enquiry ] [ Job / Career ]
+Bot: What are you reaching out about?
+     [ Sales enquiry ]  [ Job / Career ]  [ Something else ]
 
-— Sales —                         — Jobs —
-What's your name?                 What's your name?
-Which company are you with?       Which role are you interested in?
-What can we help you with?        How many years of experience?
-Thanks — our team will reach out. Thanks — our HR team will get back.
-→ tag: sales, assign: sales rep   → tag: jobs, assign: HR
+— Sales —              — Jobs —                    — Something else —
+name                   name                        name
+company                role interested in          "how can we help?"
+what we can help with  years of experience
+→ tag sales, → sales   → tag jobs, → HR            → (optional tag), → shared inbox
+   rep                                                (unassigned — anyone picks it up)
 ```
 The captured answers land in the **handoff note** on the conversation
 (and in `flow_runs.vars`), so whoever picks it up sees the full lead.
@@ -27,11 +28,14 @@ The captured answers land in the **handoff note** on the conversation
 ## Setup (once, in the dashboard — ~3 min)
 1. **Settings → Tags:** make sure a `sales` and a `jobs` tag exist.
 2. **Flows → New → pick "New enquiry (Sales or Jobs)"** to clone it.
-3. In the cloned flow, bind the two account-specific bits the template
+3. In the cloned flow, bind the account-specific bits the template
    can't ship (they differ per instance):
    - the **`sales_tag`** node → your `sales` tag; **`jobs_tag`** → `jobs`
    - the **`sales_handoff`** → assign your **sales rep**;
      **`jobs_handoff`** → assign your **HR** person
+   - **"Something else" branch:** `other_handoff` is intentionally left
+     **unassigned** (lands in the shared inbox). `other_tag` is optional —
+     bind it to a `general` tag or **delete that node**.
 4. (Optional) tweak the wording / add questions.
 5. **Activate.**
 

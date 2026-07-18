@@ -341,6 +341,11 @@ const ENQUIRY_INTAKE: FlowTemplate = {
             title: "Job / Career",
             next_node_key: "jobs_name",
           },
+          {
+            reply_id: "other",
+            title: "Something else",
+            next_node_key: "other_name",
+          },
         ],
       } as SendButtonsNodeConfig,
     },
@@ -445,6 +450,52 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       // assign_to is bound after cloning (assign to the HR teammate).
       config: {
         note: "JOB enquiry — name={{vars.name}}, position={{vars.position}}, exp={{vars.experience}}",
+      } as HandoffNodeConfig,
+    },
+
+    // ---- Other / general branch --------------------------------------
+    // Catch-all for enquiries that aren't clearly sales or jobs. Lands
+    // UNASSIGNED in the shared inbox (assign_to unset) so whoever's free
+    // picks it up. The `general` tag is optional — bind it or delete the
+    // set_tag node after cloning.
+    {
+      node_key: "other_name",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "No problem! What's your name?",
+        var_key: "name",
+        next_node_key: "other_msg",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "other_msg",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Thanks {{vars.name}}! How can we help you today?",
+        var_key: "message",
+        next_node_key: "other_thanks",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "other_thanks",
+      node_type: "send_message",
+      config: {
+        text: "Thanks {{vars.name}} — someone from our team will get back to you shortly. 🙌",
+        next_node_key: "other_tag",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "other_tag",
+      node_type: "set_tag",
+      // Optional: bind to a `general` tag, or delete this node after cloning.
+      config: { mode: "add", tag_id: "", next_node_key: "other_handoff" } as SetTagNodeConfig,
+    },
+    {
+      node_key: "other_handoff",
+      node_type: "handoff",
+      // assign_to intentionally unset → lands unassigned in the shared inbox.
+      config: {
+        note: "OTHER enquiry — name={{vars.name}}, message={{vars.message}}",
       } as HandoffNodeConfig,
     },
   ],
