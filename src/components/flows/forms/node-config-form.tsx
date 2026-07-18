@@ -158,6 +158,29 @@ export function NodeConfigForm({
               .
             </p>
           </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">
+              Also save to contact field (shows on the Contacts list)
+            </label>
+            <Select
+              value={(cfg as { save_to_field?: string }).save_to_field ?? "none"}
+              onValueChange={(v) =>
+                onUpdateConfig({
+                  save_to_field: v === "none" ? undefined : v,
+                })
+              }
+            >
+              <SelectTrigger className="bg-muted">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Don&apos;t save to contact</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="company">Company</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <NextNodeRow
             value={(cfg as { next_node_key?: string }).next_node_key ?? ""}
             allNodes={allNodes}

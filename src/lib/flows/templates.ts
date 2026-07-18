@@ -357,6 +357,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "Great! What's your name?",
         var_key: "name",
+        save_to_field: "name",
         next_node_key: "sales_email",
       } as CollectInputNodeConfig,
     },
@@ -366,6 +367,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "Thanks {{vars.name}}! What's the best email to reach you?",
         var_key: "email",
+        save_to_field: "email",
         next_node_key: "sales_company",
       } as CollectInputNodeConfig,
     },
@@ -375,6 +377,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "Thanks {{vars.name}}! Which company are you with?",
         var_key: "company",
+        save_to_field: "company",
         next_node_key: "sales_need",
       } as CollectInputNodeConfig,
     },
@@ -418,6 +421,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "Great! What's your name?",
         var_key: "name",
+        save_to_field: "name",
         next_node_key: "jobs_email",
       } as CollectInputNodeConfig,
     },
@@ -427,6 +431,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "Thanks {{vars.name}}! What's the best email to reach you?",
         var_key: "email",
+        save_to_field: "email",
         next_node_key: "jobs_role",
       } as CollectInputNodeConfig,
     },
@@ -482,6 +487,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "No problem! What's your name?",
         var_key: "name",
+        save_to_field: "name",
         next_node_key: "other_msg",
       } as CollectInputNodeConfig,
     },

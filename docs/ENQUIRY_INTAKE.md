@@ -57,8 +57,22 @@ If you'd rather keep your existing (branded) flow and just add the split:
 4. Give each **Handoff** its own assignee (sales rep / HR).
 5. Save → Activate.
 
-## Where the lead lives (v1)
-Tagged contact + the conversation + the handoff note + `flow_runs.vars`.
-There's no separate "Leads" list yet — if you want a filterable leads
-report with columns, that's a small follow-up (read `flow_runs.vars`
-or write answers to contact custom fields).
+## Where the lead lives
+- **Contacts list** — the **name / email / company** answers are written
+  straight onto the contact row (via each `collect_input`'s
+  **"Also save to contact field"** setting), so they show as real columns
+  on the Contacts page, not just inside the flow.
+- Plus the tag, the conversation, the handoff note, and `flow_runs.vars`
+  (which also holds the free-text answers like requirement / role / message).
+
+### Note on the contact name
+The webhook used to re-sync a contact's name to their WhatsApp display
+name on **every** message, which overwrote a name captured in a flow.
+That's fixed: the WhatsApp profile name now only fills the name while it's
+still a placeholder (empty or equal to the phone). Once the flow (or an
+agent) sets a real name, it sticks.
+
+## Deferred
+No dedicated "Leads" report/list yet (filterable table of leads). The
+captured fields are on the contact + in `flow_runs.vars` — a Leads view
+is a small follow-up if you want columns/filters.

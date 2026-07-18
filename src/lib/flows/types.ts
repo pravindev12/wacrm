@@ -126,6 +126,15 @@ export interface CollectInputNodeConfig {
    */
   var_key: string;
   /**
+   * Optional: also write the captured answer onto this field of the
+   * contact row (`name` / `email` / `company`), so it surfaces on the
+   * Contacts list — not just in `flow_runs.vars`. Leave unset to store
+   * only as a run variable. (`phone` is intentionally excluded — the
+   * contact's phone is the WhatsApp identity and must not be reassigned
+   * from free text.)
+   */
+  save_to_field?: "name" | "email" | "company";
+  /**
    * Reserved for v2. Accepted on the config but ignored by the v1.5
    * runner — captures any non-empty text.
    */

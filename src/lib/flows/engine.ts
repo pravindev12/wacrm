@@ -952,6 +952,32 @@ async function handleReplyForActiveRun(
         // re-SELECT the whole row.
         run.vars = newVars;
         run.reprompt_count = 0;
+
+        // Optionally persist the answer onto the contact row so it shows
+        // on the Contacts list (not just in flow_runs.vars). Whitelisted
+        // columns only — never let a config value name an arbitrary
+        // column. Best-effort: a failed contact write must not abort the
+        // capture (the var is already saved, the flow should advance).
+        const saveField = cfg.save_to_field;
+        if (
+          run.contact_id &&
+          (saveField === "name" ||
+            saveField === "email" ||
+            saveField === "company")
+        ) {
+          const { error: contactErr } = await db
+            .from("contacts")
+            .update({ [saveField]: captured, updated_at: new Date().toISOString() })
+            .eq("id", run.contact_id);
+          if (contactErr) {
+            console.error(
+              "[flows] contact field write failed:",
+              saveField,
+              contactErr.message,
+            );
+          }
+        }
+
         await logEvent(db, run.id, "node_entered", currentNode.node_key, {
           captured_key: cfg.var_key,
           captured_length: captured.length,
