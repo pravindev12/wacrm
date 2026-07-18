@@ -105,6 +105,14 @@ export interface HandoffNodeConfig {
    * node fires. Leave unset to flip the status without assignment.
    */
   assign_to?: string;
+  /**
+   * Optional lead classification. When set AND the `ODOO_LEAD_WEBHOOK_URL`
+   * env var is configured, reaching this handoff POSTs the captured lead
+   * (contact + run vars) to that URL for downstream CRM creation (e.g. the
+   * Odoo bridge: `sales` → crm.lead, `jobs` → hr.applicant). Unset = no
+   * external push.
+   */
+  lead_type?: "sales" | "jobs" | "other";
 }
 
 /**

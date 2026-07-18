@@ -410,6 +410,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       node_type: "handoff",
       // assign_to is bound after cloning (assign to the sales rep).
       config: {
+        lead_type: "sales",
         note: "SALES lead — name={{vars.name}}, email={{vars.email}}, company={{vars.company}}, need={{vars.requirement}}",
       } as HandoffNodeConfig,
     },
@@ -472,6 +473,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       node_type: "handoff",
       // assign_to is bound after cloning (assign to the HR teammate).
       config: {
+        lead_type: "jobs",
         note: "JOB enquiry — name={{vars.name}}, email={{vars.email}}, position={{vars.position}}, exp={{vars.experience}}",
       } as HandoffNodeConfig,
     },
@@ -519,6 +521,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       node_type: "handoff",
       // assign_to intentionally unset → lands unassigned in the shared inbox.
       config: {
+        lead_type: "other",
         note: "OTHER enquiry — name={{vars.name}}, message={{vars.message}}",
       } as HandoffNodeConfig,
     },

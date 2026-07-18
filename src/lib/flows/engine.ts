@@ -435,7 +435,11 @@ async function executeHandoff(
   run: FlowRunRow,
   node: FlowNodeRow,
 ): Promise<void> {
-  const cfg = node.config as { assign_to?: string; note?: string };
+  const cfg = node.config as {
+    assign_to?: string;
+    note?: string;
+    lead_type?: "sales" | "jobs" | "other";
+  };
   const convUpdate: Record<string, unknown> = {
     status: "pending",
     updated_at: new Date().toISOString(),
@@ -451,7 +455,68 @@ async function executeHandoff(
     note: cfg.note ?? null,
     assigned_to: cfg.assign_to ?? null,
   });
+  // Push the captured lead to an external CRM (e.g. the Odoo bridge)
+  // before ending the run, if this handoff is classified + a webhook URL
+  // is configured. Best-effort — never blocks/breaks the handoff.
+  if (cfg.lead_type) {
+    await fireLeadWebhook(db, run, cfg.lead_type, cfg.note ?? null);
+  }
   await endRun(db, run.id, "handed_off", "handoff_node");
+}
+
+/**
+ * POST the captured lead to `ODOO_LEAD_WEBHOOK_URL` for downstream CRM
+ * creation. Sends the contact fields + all collected run vars + the
+ * lead type; a receiver (the Odoo bridge) maps sales → crm.lead and
+ * jobs → hr.applicant. No-op unless the URL is set. Best-effort: a
+ * bridge outage logs a warning but must not fail the flow.
+ */
+async function fireLeadWebhook(
+  db: AdminClient,
+  run: FlowRunRow,
+  leadType: "sales" | "jobs" | "other",
+  note: string | null,
+): Promise<void> {
+  const url = process.env.ODOO_LEAD_WEBHOOK_URL;
+  if (!url || !run.contact_id) return;
+
+  const { data: contact } = await db
+    .from("contacts")
+    .select("name, email, phone, company")
+    .eq("id", run.contact_id)
+    .maybeSingle();
+
+  const payload = {
+    source: "wacrm-flow",
+    lead_type: leadType,
+    contact: contact ?? null,
+    answers: run.vars ?? {},
+    note,
+    conversation_id: run.conversation_id ?? null,
+    captured_at: new Date().toISOString(),
+  };
+
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  const secret = process.env.ODOO_LEAD_WEBHOOK_SECRET;
+  if (secret) headers["authorization"] = `Bearer ${secret}`;
+
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      console.error("[flows] lead webhook non-2xx:", res.status);
+    }
+  } catch (err) {
+    console.error(
+      "[flows] lead webhook failed:",
+      err instanceof Error ? err.message : err,
+    );
+  }
 }
 
 /**

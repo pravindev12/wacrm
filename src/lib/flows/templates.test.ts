@@ -129,5 +129,10 @@ describe("enquiry_intake template (Sales / Jobs)", () => {
     for (const h of handoffs) {
       expect((h.config as { note?: string }).note).toContain("{{vars.name}}");
     }
+    // every handoff is classified so it pushes to the CRM bridge
+    const leadTypes = handoffs
+      .map((h) => (h.config as { lead_type?: string }).lead_type)
+      .sort();
+    expect(leadTypes).toEqual(["jobs", "other", "sales"]);
   });
 });
