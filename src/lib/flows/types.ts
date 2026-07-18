@@ -190,6 +190,32 @@ export interface SetTagNodeConfig {
   next_node_key: string;
 }
 
+/**
+ * Fire an HTTP request to an external endpoint mid-flow (a "webhook"
+ * node), then auto-advance. Used to push captured data to an external
+ * system — e.g. the Odoo lead bridge, Zapier, another CRM. Best-effort:
+ * a non-2xx or network error is logged and the flow advances anyway
+ * (the customer must never be stranded because an integration is down).
+ *
+ * `body_template` interpolates `{{vars.X}}` from the run's captured
+ * answers, so you send exactly the fields you want. The DB reserves the
+ * `http_fetch` node_type (migration 016) for this.
+ */
+export interface HttpFetchNodeConfig {
+  /** Destination URL (http/https). */
+  url: string;
+  /** HTTP method. Defaults to POST. GET ignores the body. */
+  method?: "POST" | "GET" | "PUT";
+  /** Extra request headers (e.g. an Authorization bearer token). */
+  headers?: Record<string, string>;
+  /**
+   * Request body sent as-is (typically JSON). Interpolates `{{vars.X}}`.
+   * Ignored for GET.
+   */
+  body_template?: string;
+  next_node_key: string;
+}
+
 // Terminal nodes carry no config — they just stop the run.
 export type EndNodeConfig = Record<string, never>;
 
@@ -210,6 +236,7 @@ export type FlowNodeConfig =
   | { node_type: "collect_input"; config: CollectInputNodeConfig }
   | { node_type: "condition"; config: ConditionNodeConfig }
   | { node_type: "set_tag"; config: SetTagNodeConfig }
+  | { node_type: "http_fetch"; config: HttpFetchNodeConfig }
   | { node_type: "handoff"; config: HandoffNodeConfig }
   | { node_type: "end"; config: EndNodeConfig };
 

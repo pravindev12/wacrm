@@ -27,6 +27,7 @@ import {
   PlayCircle,
   Tag,
   UserPlus,
+  Webhook,
   Workflow,
 } from "lucide-react";
 
@@ -47,6 +48,7 @@ export type NodeType =
   | "collect_input"
   | "condition"
   | "set_tag"
+  | "http_fetch"
   | "handoff"
   | "end";
 
@@ -104,6 +106,11 @@ export const NODE_META: Record<
     label: "Tag contact",
     icon: Tag,
     color: "text-pink-400",
+  },
+  http_fetch: {
+    label: "Webhook / HTTP",
+    icon: Webhook,
+    color: "text-orange-400",
   },
   handoff: {
     label: "Handoff to agent",
@@ -246,6 +253,17 @@ export function summarizeNode(node: BuilderNode): string | null {
       // short prefix of the UUID so users can disambiguate between
       // multiple set_tag nodes at a glance.
       return tagId ? `${mode} tag ${tagId.slice(0, 8)}…` : `${mode} tag (none picked)`;
+    }
+    case "http_fetch": {
+      const url = typeof cfg.url === "string" ? cfg.url : "";
+      const method =
+        typeof cfg.method === "string" && cfg.method ? cfg.method : "POST";
+      if (!url) return "No URL set";
+      try {
+        return `${method} ${truncate(new URL(url).host, 40)}`;
+      } catch {
+        return `${method} ${truncate(url, 40)}`;
+      }
     }
     case "handoff": {
       const note = typeof cfg.note === "string" ? cfg.note : "";
