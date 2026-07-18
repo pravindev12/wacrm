@@ -72,7 +72,20 @@ That's fixed: the WhatsApp profile name now only fills the name while it's
 still a placeholder (empty or equal to the phone). Once the flow (or an
 agent) sets a real name, it sticks.
 
+## Push leads to Odoo (crm.lead / hr.applicant)
+Each handoff can classify the lead via **"Send to CRM as"** (sales / jobs /
+other). When `ODOO_LEAD_WEBHOOK_URL` is set, reaching that handoff POSTs the
+lead (contact + all answers + note) to that URL. The bridge in
+`odoo-improvements/` (`wacrm_lead_bridge.py`) turns it into:
+- `sales` / `other` → **crm.lead**
+- `jobs` → **hr.applicant**
+
+Setup: run the bridge (see `odoo-improvements/WACRM-LEAD-BRIDGE.md`), then
+set `ODOO_LEAD_WEBHOOK_URL` (+ `ODOO_LEAD_WEBHOOK_SECRET`) in wacrm's env
+and redeploy. The intake template already sets `lead_type` on all three
+handoffs, so no flow edit is needed — just the env + bridge.
+
 ## Deferred
-No dedicated "Leads" report/list yet (filterable table of leads). The
-captured fields are on the contact + in `flow_runs.vars` — a Leads view
-is a small follow-up if you want columns/filters.
+No dedicated in-app "Leads" report/list yet (filterable table). Captured
+fields are on the contact + in `flow_runs.vars` + (optionally) Odoo — an
+in-app Leads view is a small follow-up if you want columns/filters here too.
