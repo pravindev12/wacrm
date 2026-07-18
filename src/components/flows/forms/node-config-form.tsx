@@ -211,6 +211,78 @@ export function NodeConfigForm({
         />
       );
 
+    case "http_fetch":
+      return (
+        <>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">
+              Request URL
+            </label>
+            <Input
+              value={(cfg as { url?: string }).url ?? ""}
+              onChange={(e) => onUpdateConfig({ url: e.target.value })}
+              placeholder="https://your-bridge.example.com/wacrm-lead"
+              className="bg-muted font-mono text-xs"
+            />
+            <p className="mt-1 text-[10px] text-muted-foreground">
+              The flow POSTs here and advances even if it fails. Supports{" "}
+              <code className="rounded bg-muted px-1">{"{{vars.x}}"}</code>.
+            </p>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">
+              Method
+            </label>
+            <Select
+              value={(cfg as { method?: string }).method ?? "POST"}
+              onValueChange={(v) => onUpdateConfig({ method: v })}
+            >
+              <SelectTrigger className="bg-muted">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="POST">POST</SelectItem>
+                <SelectItem value="PUT">PUT</SelectItem>
+                <SelectItem value="GET">GET (no body)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <TextRow
+            label="Request body — JSON; interpolates {{vars.x}}"
+            value={(cfg as { body_template?: string }).body_template ?? ""}
+            onChange={(v) => onUpdateConfig({ body_template: v })}
+            rows={5}
+          />
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">
+              Authorization header (optional)
+            </label>
+            <Input
+              value={
+                (cfg as { headers?: Record<string, string> }).headers
+                  ?.Authorization ?? ""
+              }
+              onChange={(e) =>
+                onUpdateConfig({
+                  headers: e.target.value
+                    ? { Authorization: e.target.value }
+                    : {},
+                })
+              }
+              placeholder="Bearer <token>"
+              className="bg-muted font-mono text-xs"
+            />
+          </div>
+          <NextNodeRow
+            value={(cfg as { next_node_key?: string }).next_node_key ?? ""}
+            allNodes={allNodes}
+            currentKey={node.node_key}
+            onChange={(v) => onUpdateConfig({ next_node_key: v })}
+            label="After the request, advance to"
+          />
+        </>
+      );
+
     case "handoff":
       return (
         <>

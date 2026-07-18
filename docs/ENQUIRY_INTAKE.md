@@ -85,6 +85,17 @@ set `ODOO_LEAD_WEBHOOK_URL` (+ `ODOO_LEAD_WEBHOOK_SECRET`) in wacrm's env
 and redeploy. The intake template already sets `lead_type` on all three
 handoffs, so no flow edit is needed — just the env + bridge.
 
+### Two ways to push (they coexist)
+1. **Handoff shortcut** (above) — set "Send to CRM as" on a handoff; the
+   URL/secret live in **env**. Simplest; used by the template.
+2. **Webhook / HTTP node** — drop a general-purpose **Webhook** node
+   anywhere in a flow (Add node → *Webhook / HTTP*). Configure the URL,
+   method, an optional Authorization header, and a JSON **body** that
+   interpolates `{{vars.x}}`. Fires the request then advances (best-effort).
+   Use this for per-branch endpoints, other CRMs/Zapier/n8n, or when you
+   want the URL in the flow rather than env. Example body:
+   `{"lead_type":"sales","contact":{"name":"{{vars.name}}","email":"{{vars.email}}"},"answers":{"requirement":"{{vars.requirement}}"}}`
+
 ## Deferred
 No dedicated in-app "Leads" report/list yet (filterable table). Captured
 fields are on the contact + in `flow_runs.vars` + (optionally) Odoo — an

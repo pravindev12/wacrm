@@ -54,6 +54,7 @@ import {
   type SendMediaNodeConfig,
   type SendMessageNodeConfig,
   type SetTagNodeConfig,
+  type HttpFetchNodeConfig,
   type StartNodeConfig,
   type KeywordTriggerConfig,
 } from "./types";
@@ -116,7 +117,8 @@ export function isAutoAdvancing(node_type: string): boolean {
     node_type === "send_message" ||
     node_type === "send_media" ||
     node_type === "condition" ||
-    node_type === "set_tag"
+    node_type === "set_tag" ||
+    node_type === "http_fetch"
   );
 }
 
@@ -791,6 +793,34 @@ async function advanceFromNodeKey(
         // strand the customer mid-flow.
         await logEvent(db, run.id, "error", node.node_key, {
           reason: "set_tag_failed",
+          detail: err instanceof Error ? err.message : String(err),
+        });
+      }
+      currentKey = cfg.next_node_key;
+      continue;
+    }
+    if (node.node_type === "http_fetch") {
+      const cfg = node.config as unknown as HttpFetchNodeConfig;
+      const method = cfg.method ?? "POST";
+      try {
+        const init: RequestInit = {
+          method,
+          headers: { "content-type": "application/json", ...(cfg.headers ?? {}) },
+        };
+        if (method !== "GET" && cfg.body_template) {
+          init.body = interpolateVars(cfg.body_template, run.vars);
+        }
+        const res = await fetch(interpolateVars(cfg.url, run.vars), init);
+        await logEvent(db, run.id, "node_entered", node.node_key, {
+          node_type: "http_fetch",
+          status: res.status,
+          ok: res.ok,
+        });
+      } catch (err) {
+        // Best-effort — a failed integration call must not strand the
+        // customer mid-flow. Log and advance.
+        await logEvent(db, run.id, "error", node.node_key, {
+          reason: "http_fetch_failed",
           detail: err instanceof Error ? err.message : String(err),
         });
       }

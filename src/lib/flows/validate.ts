@@ -701,6 +701,62 @@ function validateNode(
       break;
     }
 
+    case "http_fetch": {
+      const cfg = node.config as {
+        url?: string;
+        next_node_key?: string;
+      };
+      if (!cfg.url?.trim()) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "url",
+          message: "Webhook node needs a URL.",
+        });
+      } else if (!cfg.url.includes("{{")) {
+        // Skip strict parsing when the URL uses {{vars.x}} interpolation.
+        try {
+          const u = new URL(cfg.url);
+          if (u.protocol !== "http:" && u.protocol !== "https:") {
+            issues.push({
+              severity: "error",
+              scope: "node",
+              node_key: node.node_key,
+              field: "url",
+              message: "Webhook URL must use http or https.",
+            });
+          }
+        } catch {
+          issues.push({
+            severity: "error",
+            scope: "node",
+            node_key: node.node_key,
+            field: "url",
+            message: "Webhook URL is not a valid URL.",
+          });
+        }
+      }
+      if (!cfg.next_node_key) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "next_node_key",
+          message: "Webhook must point to a next node.",
+        });
+      } else if (!knownKeys.has(cfg.next_node_key)) {
+        issues.push({
+          severity: "error",
+          scope: "node",
+          node_key: node.node_key,
+          field: "next_node_key",
+          message: `Webhook points to non-existent node "${cfg.next_node_key}".`,
+        });
+      }
+      break;
+    }
+
     case "handoff":
     case "end":
       // Terminal nodes have no outgoing edges; nothing to validate
@@ -751,7 +807,8 @@ function outgoingEdges(node: NodeInput): string[] {
     case "send_message":
     case "send_media":
     case "collect_input":
-    case "set_tag": {
+    case "set_tag":
+    case "http_fetch": {
       const cfg = node.config as { next_node_key?: string };
       return cfg.next_node_key ? [cfg.next_node_key] : [];
     }
