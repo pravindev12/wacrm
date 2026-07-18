@@ -17,7 +17,8 @@ Bot: What are you reaching out about?
 
 — Sales —              — Jobs —                    — Something else —
 name                   name                        name
-company                role interested in          "how can we help?"
+email                  email                       "how can we help?"
+company                role interested in
 what we can help with  years of experience
 → tag sales, → sales   → tag jobs, → HR            → (optional tag), → shared inbox
    rep                                                (unassigned — anyone picks it up)

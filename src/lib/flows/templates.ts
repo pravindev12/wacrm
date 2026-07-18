@@ -357,6 +357,15 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "Great! What's your name?",
         var_key: "name",
+        next_node_key: "sales_email",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "sales_email",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Thanks {{vars.name}}! What's the best email to reach you?",
+        var_key: "email",
         next_node_key: "sales_company",
       } as CollectInputNodeConfig,
     },
@@ -398,7 +407,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       node_type: "handoff",
       // assign_to is bound after cloning (assign to the sales rep).
       config: {
-        note: "SALES lead — name={{vars.name}}, company={{vars.company}}, need={{vars.requirement}}",
+        note: "SALES lead — name={{vars.name}}, email={{vars.email}}, company={{vars.company}}, need={{vars.requirement}}",
       } as HandoffNodeConfig,
     },
 
@@ -409,6 +418,15 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       config: {
         prompt_text: "Great! What's your name?",
         var_key: "name",
+        next_node_key: "jobs_email",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "jobs_email",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Thanks {{vars.name}}! What's the best email to reach you?",
+        var_key: "email",
         next_node_key: "jobs_role",
       } as CollectInputNodeConfig,
     },
@@ -449,7 +467,7 @@ const ENQUIRY_INTAKE: FlowTemplate = {
       node_type: "handoff",
       // assign_to is bound after cloning (assign to the HR teammate).
       config: {
-        note: "JOB enquiry — name={{vars.name}}, position={{vars.position}}, exp={{vars.experience}}",
+        note: "JOB enquiry — name={{vars.name}}, email={{vars.email}}, position={{vars.position}}, exp={{vars.experience}}",
       } as HandoffNodeConfig,
     },
 
