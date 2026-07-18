@@ -84,25 +84,30 @@ describe("enquiry_intake template (Sales / Jobs)", () => {
     expect(t!.trigger_type).toBe("first_inbound_message");
   });
 
-  it("offers a Sales and a Jobs button off the menu", () => {
+  it("offers Sales, Jobs and Other buttons off the menu (WhatsApp's 3-button max)", () => {
     const menu = t!.nodes.find((n) => n.node_type === "send_buttons");
     expect(menu, "has a send_buttons menu").toBeDefined();
-    const replyIds = (
-      (menu!.config as { buttons: Array<{ reply_id: string }> }).buttons
-    ).map((b) => b.reply_id);
-    expect(replyIds).toContain("sales");
-    expect(replyIds).toContain("jobs");
+    const buttons = (
+      menu!.config as { buttons: Array<{ reply_id: string; title: string }> }
+    ).buttons;
+    const replyIds = buttons.map((b) => b.reply_id);
+    expect(replyIds).toEqual(
+      expect.arrayContaining(["sales", "jobs", "other"]),
+    );
+    // Meta caps reply buttons at 3 and titles at 20 chars.
+    expect(buttons.length).toBeLessThanOrEqual(3);
+    for (const b of buttons) expect(b.title.length).toBeLessThanOrEqual(20);
   });
 
-  it("each branch tags the contact and ends in a handoff (both reachable)", () => {
+  it("each of the three branches tags the contact and ends in a handoff", () => {
     const seen = reachable(t!);
     const seenNodes = t!.nodes.filter((n) => seen.has(n.node_key));
     const tags = seenNodes.filter((n) => n.node_type === "set_tag");
     const handoffs = seenNodes.filter((n) => n.node_type === "handoff");
-    // one set_tag + one handoff per branch
-    expect(tags.length).toBe(2);
-    expect(handoffs.length).toBe(2);
-    // both handoff notes carry the captured name for a readable lead record
+    // one set_tag + one handoff per branch (sales / jobs / other)
+    expect(tags.length).toBe(3);
+    expect(handoffs.length).toBe(3);
+    // every handoff note carries the captured name for a readable lead record
     for (const h of handoffs) {
       expect((h.config as { note?: string }).note).toContain("{{vars.name}}");
     }
