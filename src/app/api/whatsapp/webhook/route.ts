@@ -889,8 +889,16 @@ async function findOrCreateContact(
   )
 
   if (existingContact) {
-    // Update name if it changed
-    if (name && name !== existingContact.name) {
+    // Fill the name from the WhatsApp profile ONLY while the contact
+    // still has a placeholder name — empty, or equal to its phone (the
+    // fallback used at creation). Once a real name exists (typed by the
+    // customer in an intake flow, set by a set-field node, or edited by
+    // an agent), we must not overwrite it with the WhatsApp display name
+    // on every subsequent inbound — that clobbered flow-captured names.
+    const currentName = existingContact.name?.trim()
+    const isPlaceholderName =
+      !currentName || currentName === existingContact.phone
+    if (name && isPlaceholderName && name !== existingContact.name) {
       await supabaseAdmin()
         .from('contacts')
         .update({ name, updated_at: new Date().toISOString() })

@@ -99,6 +99,24 @@ describe("enquiry_intake template (Sales / Jobs)", () => {
     for (const b of buttons) expect(b.title.length).toBeLessThanOrEqual(20);
   });
 
+  it("persists name/email/company answers onto the contact (save_to_field)", () => {
+    const collects = t!.nodes.filter((n) => n.node_type === "collect_input");
+    // Every step that captures name/email/company also writes it to the
+    // matching contact field so it shows on the Contacts list.
+    for (const field of ["name", "email", "company"] as const) {
+      const nodes = collects.filter(
+        (n) => (n.config as { var_key?: string }).var_key === field,
+      );
+      expect(nodes.length, `has a ${field} question`).toBeGreaterThan(0);
+      for (const n of nodes) {
+        expect(
+          (n.config as { save_to_field?: string }).save_to_field,
+          `${n.node_key} saves to contact.${field}`,
+        ).toBe(field);
+      }
+    }
+  });
+
   it("each of the three branches tags the contact and ends in a handoff", () => {
     const seen = reachable(t!);
     const seenNodes = t!.nodes.filter((n) => seen.has(n.node_key));
