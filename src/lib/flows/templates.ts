@@ -27,6 +27,7 @@ import type {
   SendButtonsNodeConfig,
   SendListNodeConfig,
   SendMessageNodeConfig,
+  SetTagNodeConfig,
   StartNodeConfig,
 } from "./types";
 
@@ -286,6 +287,170 @@ const LEAD_CAPTURE: FlowTemplate = {
 };
 
 // ============================================================
+// 4. New enquiry (Sales or Jobs) — buttons split → per-branch
+//    collect_input → set_tag → handoff to the right team.
+//
+// Built for a single WhatsApp number that fields BOTH sales leads and
+// job enquiries. Fires on the contact's first message (so we're inside
+// the 24h window and can send the interactive menu freely), asks the
+// customer which it is, captures the branch's fields, tags the contact,
+// and hands off to sales / HR with the answers in the note.
+//
+// After cloning, the operator binds the two account-specific ids the
+// builder can't ship (they vary per instance):
+//   - set_tag → pick the `sales` / `jobs` tag
+//   - handoff → assign the sales rep / HR teammate
+// ...then activates. See docs/ENQUIRY_INTAKE.md.
+// ============================================================
+const ENQUIRY_INTAKE: FlowTemplate = {
+  slug: "enquiry_intake",
+  name: "New enquiry (Sales or Jobs)",
+  description:
+    "Greet every new chat, ask if it's a sales or job enquiry, capture the right details for each, tag the contact, and hand off to the right team.",
+  icon: "UserPlus",
+  trigger_type: "first_inbound_message",
+  trigger_config: {},
+  entry_node_id: "start",
+  nodes: [
+    {
+      node_key: "start",
+      node_type: "start",
+      config: { next_node_key: "intro" },
+    },
+    {
+      node_key: "intro",
+      node_type: "send_message",
+      config: {
+        text: "Welcome to JUSTTRY TECHNOLOGIES! 👋 So we can help you faster, just one quick question first.",
+        next_node_key: "menu",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "menu",
+      node_type: "send_buttons",
+      config: {
+        text: "What are you reaching out about?",
+        buttons: [
+          {
+            reply_id: "sales",
+            title: "Sales enquiry",
+            next_node_key: "sales_name",
+          },
+          {
+            reply_id: "jobs",
+            title: "Job / Career",
+            next_node_key: "jobs_name",
+          },
+        ],
+      } as SendButtonsNodeConfig,
+    },
+
+    // ---- Sales branch ------------------------------------------------
+    {
+      node_key: "sales_name",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Great! What's your name?",
+        var_key: "name",
+        next_node_key: "sales_company",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "sales_company",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Thanks {{vars.name}}! Which company are you with?",
+        var_key: "company",
+        next_node_key: "sales_need",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "sales_need",
+      node_type: "collect_input",
+      config: {
+        prompt_text:
+          "And briefly, what can we help you with? (project / service you're after)",
+        var_key: "requirement",
+        next_node_key: "sales_thanks",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "sales_thanks",
+      node_type: "send_message",
+      config: {
+        text: "Thanks {{vars.name}} — our team will reach out shortly. 🙌",
+        next_node_key: "sales_tag",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "sales_tag",
+      node_type: "set_tag",
+      // tag_id is bound after cloning (pick the `sales` tag in the builder).
+      config: { mode: "add", tag_id: "", next_node_key: "sales_handoff" } as SetTagNodeConfig,
+    },
+    {
+      node_key: "sales_handoff",
+      node_type: "handoff",
+      // assign_to is bound after cloning (assign to the sales rep).
+      config: {
+        note: "SALES lead — name={{vars.name}}, company={{vars.company}}, need={{vars.requirement}}",
+      } as HandoffNodeConfig,
+    },
+
+    // ---- Jobs branch -------------------------------------------------
+    {
+      node_key: "jobs_name",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Great! What's your name?",
+        var_key: "name",
+        next_node_key: "jobs_role",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "jobs_role",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "Thanks {{vars.name}}! Which role are you interested in?",
+        var_key: "position",
+        next_node_key: "jobs_exp",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "jobs_exp",
+      node_type: "collect_input",
+      config: {
+        prompt_text: "How many years of experience do you have?",
+        var_key: "experience",
+        next_node_key: "jobs_thanks",
+      } as CollectInputNodeConfig,
+    },
+    {
+      node_key: "jobs_thanks",
+      node_type: "send_message",
+      config: {
+        text: "Thanks {{vars.name}} — our HR team will get back to you. 🙌",
+        next_node_key: "jobs_tag",
+      } as SendMessageNodeConfig,
+    },
+    {
+      node_key: "jobs_tag",
+      node_type: "set_tag",
+      // tag_id is bound after cloning (pick the `jobs` tag in the builder).
+      config: { mode: "add", tag_id: "", next_node_key: "jobs_handoff" } as SetTagNodeConfig,
+    },
+    {
+      node_key: "jobs_handoff",
+      node_type: "handoff",
+      // assign_to is bound after cloning (assign to the HR teammate).
+      config: {
+        note: "JOB enquiry — name={{vars.name}}, position={{vars.position}}, exp={{vars.experience}}",
+      } as HandoffNodeConfig,
+    },
+  ],
+};
+
+// ============================================================
 // Registry
 // ============================================================
 
@@ -293,6 +458,7 @@ const TEMPLATES: Record<string, FlowTemplate> = {
   welcome_menu: WELCOME_MENU,
   faq_bot: FAQ_BOT,
   lead_capture: LEAD_CAPTURE,
+  enquiry_intake: ENQUIRY_INTAKE,
 };
 
 export function getFlowTemplate(slug: string): FlowTemplate | null {
