@@ -213,12 +213,35 @@ export function NodeConfigForm({
 
     case "handoff":
       return (
-        <TextRow
-          label="Internal note (for the agent picking up)"
-          value={(cfg as { note?: string }).note ?? ""}
-          onChange={(v) => onUpdateConfig({ note: v })}
-          rows={2}
-        />
+        <>
+          <TextRow
+            label="Internal note (for the agent picking up)"
+            value={(cfg as { note?: string }).note ?? ""}
+            onChange={(v) => onUpdateConfig({ note: v })}
+            rows={2}
+          />
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">
+              Send to CRM as (pushes the lead to ODOO_LEAD_WEBHOOK_URL if set)
+            </label>
+            <Select
+              value={(cfg as { lead_type?: string }).lead_type ?? "none"}
+              onValueChange={(v) =>
+                onUpdateConfig({ lead_type: v === "none" ? undefined : v })
+              }
+            >
+              <SelectTrigger className="bg-muted">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Don&apos;t send to CRM</SelectItem>
+                <SelectItem value="sales">Sales lead (crm.lead)</SelectItem>
+                <SelectItem value="jobs">Job enquiry (hr.applicant)</SelectItem>
+                <SelectItem value="other">Other enquiry</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </>
       );
 
     case "end":
