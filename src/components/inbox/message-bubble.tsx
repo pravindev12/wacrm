@@ -13,6 +13,7 @@ import {
   LayoutTemplate,
   ImageOff,
   CornerDownLeft,
+  ExternalLink,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ReplyQuote } from "./reply-quote";
@@ -106,13 +107,41 @@ function MediaImage({ url, alt }: { url: string; alt: string }) {
     );
   }
 
+  // The thumbnail is capped small, so screenshots/documents are often
+  // unreadable inline. Both the image and the corner button open the
+  // full-size original in a new tab.
+  //
+  // We open `url` (the original), NOT `src`: for proxied media `src` is a
+  // short-lived blob: URL that gets revoked when this bubble unmounts,
+  // which would break the opened tab. `url` is same-origin and
+  // cookie-authenticated, so a new tab loads it fine.
   return (
-    <img
-      src={src ?? ""}
-      alt={alt}
-      className="max-h-64 max-w-60 rounded-lg object-cover"
-      onError={() => setError(true)}
-    />
+    <div className="group relative inline-block">
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Open full size in a new tab"
+      >
+        <img
+          src={src ?? ""}
+          alt={alt}
+          // object-contain (not cover) so tall screenshots aren't cropped.
+          className="max-h-64 max-w-60 cursor-zoom-in rounded-lg object-contain"
+          onError={() => setError(true)}
+        />
+      </a>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Open image in new tab"
+        title="Open full size in a new tab"
+        className="absolute right-1.5 top-1.5 rounded-md bg-black/60 p-1.5 text-white opacity-0 transition-opacity focus:opacity-100 group-hover:opacity-100"
+      >
+        <ExternalLink className="h-3.5 w-3.5" />
+      </a>
+    </div>
   );
 }
 
